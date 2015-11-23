@@ -4,7 +4,7 @@
 
 export GO15VENDOREXPERIMENT = 1
 
-NAME=pocket-cleaner
+NAME=pocketcleaner
 PREFIX ?= /usr/local
 VERSION=$(shell git describe --tags --always --dirty)
 GOVERSION = $(shell go version)
@@ -12,13 +12,13 @@ BUILDTIME = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILDER = $(shell echo "`git config user.name` <`git config user.email`>")
 PKG_RELEASE ?= 1
 PROJECT_URL="https://github.com/mrtazz/$(NAME)"
-SOURCES=main.go
+SOURCES=cmd/pocketcleaner/main.go
 LDFLAGS=-X 'main.version=$(VERSION)' \
 				-X 'main.buildTime=$(BUILDTIME)'\
 				-X 'main.builder=$(BUILDER)'\
 				-X 'main.goversion=$(GOVERSION)'
 
-$(NAME): main.go
+$(NAME): $(SOURCES)
 	go build -ldflags "$(LDFLAGS)" -o $@ $<
 
 $(PREFIX)/bin:
@@ -60,6 +60,9 @@ deb: $(SOURCES)
 
 test:
 	@go test .
+
+coverage:
+	@go test -coverprofile=cover.out github.com/mrtazz/$(NAME)
 
 benchmark:
 	@echo "Running tests..."
