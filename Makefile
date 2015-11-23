@@ -6,7 +6,7 @@ export GO15VENDOREXPERIMENT = 1
 
 NAME=pocket-cleaner
 PREFIX ?= /usr/local
-VERSION=$(shell git describe --abbrev=0)
+VERSION=$(shell git describe --tags --always --dirty)
 GOVERSION = $(shell go version)
 BUILDTIME = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILDER = $(shell echo "`git config user.name` <`git config user.email`>")
