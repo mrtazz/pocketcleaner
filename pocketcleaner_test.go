@@ -61,4 +61,7 @@ func TestFilterOutNewestItems(t *testing.T) {
 		expect(t, ret[tt.id].TimeAdded, tt.timestamp)
 	}
 
+	ret2 := pocketcleaner.FilterOutNewestItems(arr, 20)
+	expect(t, len(ret2), 0)
+
 }
