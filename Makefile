@@ -63,6 +63,7 @@ test:
 
 coverage:
 	@go test -coverprofile=cover.out github.com/mrtazz/$(NAME)
+	@go tool cover -html=cover.out -o cover.html
 
 benchmark:
 	@echo "Running tests..."
