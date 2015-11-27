@@ -7,6 +7,8 @@ import (
 	"sort"
 )
 
+// type for the actual item types coming from the pocket API. The most
+// important bit here for the cleaner functionality is the TimeAdded.
 type PocketItem struct {
 	GivenTitle    string `json:"given_title"`
 	IsArticle     string `json:"is_article"`
@@ -29,7 +31,7 @@ type PocketItem struct {
 	ItemID        string `json:"item_id"`
 }
 
-// // implement sort interface for PocketItemArray
+// implement sort interface for PocketItemArray.
 type PocketItemArray []PocketItem
 
 func (list PocketItemArray) Len() int {
@@ -44,12 +46,16 @@ func (list PocketItemArray) Swap(i, j int) {
 	list[i], list[j] = list[j], list[i]
 }
 
+// type declaration for the list of pocket articles in the API response
 type PocketItemList map[string]PocketItem
 
+// search meta type for parsing out the pocket API response
 type PocketSearchMeta struct {
 	SearchType string `json:"search_type"`
 }
 
+// type to hold the response of a call to the pocket API. The only thing we
+// are really interested in here is the list of articles.
 type PocketResponse struct {
 	SearchMeta PocketSearchMeta `json:"search_meta"`
 	Status     uint             `json:"status"`
@@ -62,6 +68,9 @@ type PocketResponse struct {
 func GetAllPocketItems() {
 }
 
+// filters out the newest `count` items from an array of PocketItems and
+// returns the resulting array. This is so the returned array can be fed
+// directly into ArchiveItems.
 func FilterOutNewestItems(list PocketItemArray, count int) PocketItemArray {
 	if len(list) < count {
 		return make([]PocketItem, 0)
@@ -77,6 +86,9 @@ func ArchiveItems() {
 func CallPocketAPI(method string, consumer_key string, access_token string) {
 }
 
+// this parses a JSON string into a PocketResponse object. It basically only
+// calls json.Unmarshal() but it's stuck into a function for usability and
+// testability.
 func ParsePocketResponse(response string) (PocketResponse, error) {
 	ret := PocketResponse{}
 	err := json.Unmarshal([]byte(response), &ret)
