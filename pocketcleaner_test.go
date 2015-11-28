@@ -1,20 +1,80 @@
 package pocketcleaner
 
 import (
+	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"testing"
 )
 
+type pocketMock struct {
+	JSON      string
+	Response  PocketResponse
+	ItemArray PocketItemArray
+	Client    *PocketClient
+	Server    *httptest.Server
+}
+
+type mockSetup struct {
+	Code int
+	Body string
+}
+
+// gratefully taken and adapted from
+// http://keighl.com/post/mocking-http-responses-in-golang/
 func expect(t *testing.T, a interface{}, b interface{}) {
 	if a != b {
 		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
 	}
 }
 
+// this is the test setup method that each test can call to get a set of mock
+// objects. If arguments are passed, the first one should be the return code
+// of the mock server and the second one the return body
+func testSetup(ms mockSetup) pocketMock {
+	code := ms.Code
+	body := ms.Body
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(code)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintln(w, body)
+	}))
+
+	transport := &http.Transport{
+		Proxy: func(req *http.Request) (*url.URL, error) {
+			return url.Parse(server.URL)
+		},
+	}
+
+	httpClient := &http.Client{Transport: transport}
+	client := &PocketClient{
+		BaseURL:        server.URL,
+		ConsumerSecret: "foo",
+		APIToken:       "bar",
+		HTTPClient:     httpClient,
+		KeepCount:      5,
+	}
+
+	input, _ := ioutil.ReadFile("fixtures/pocket_response.json")
+	mockedJSON := string(input)
+	mockedResponse, _ := parsePocketResponse(mockedJSON)
+	mockedPocketItemArray := make(PocketItemArray, 0)
+
+	for _, v := range mockedResponse.List {
+		mockedPocketItemArray = append(mockedPocketItemArray, v)
+	}
+
+	return pocketMock{
+		mockedJSON, mockedResponse, mockedPocketItemArray, client, server,
+	}
+}
+
 func TestParsePacketResponse(t *testing.T) {
 	input, _ := ioutil.ReadFile("fixtures/pocket_response.json")
-	ret, err := ParsePocketResponse(string(input))
+	ret, err := parsePocketResponse(string(input))
 
 	expect(t, err, nil)
 	expect(t, ret.Since, uint(1448244422))
@@ -24,16 +84,8 @@ func TestParsePacketResponse(t *testing.T) {
 }
 
 func TestFilterOutNewestItems(t *testing.T) {
-	input, _ := ioutil.ReadFile("fixtures/pocket_response.json")
-	items, err := ParsePocketResponse(string(input))
-	expect(t, err, nil)
-	arr := make(PocketItemArray, 0)
-
-	for _, v := range items.List {
-		arr = append(arr, v)
-	}
-
-	ret := FilterOutNewestItems(arr, 5)
+	mockedPocketItemArray := testSetup(mockSetup{}).ItemArray
+	ret := filterOutNewestItems(mockedPocketItemArray, 5)
 
 	expect(t, len(ret), 11)
 
@@ -60,7 +112,16 @@ func TestFilterOutNewestItems(t *testing.T) {
 		expect(t, ret[tt.id].TimeAdded, tt.timestamp)
 	}
 
-	ret2 := FilterOutNewestItems(arr, 20)
+	ret2 := filterOutNewestItems(mockedPocketItemArray, 20)
 	expect(t, len(ret2), 0)
 
+}
+
+func TestArchiveItems(t *testing.T) {
+	pm := testSetup(mockSetup{200, "foo"})
+	mockedPocketItemArray, server, client := pm.ItemArray, pm.Server, pm.Client
+	defer server.Close()
+	err, ret := client.archiveItems(mockedPocketItemArray)
+	expect(t, err, nil)
+	expect(t, len(ret), 0)
 }
