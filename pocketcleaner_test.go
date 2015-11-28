@@ -1,7 +1,6 @@
-package pocketcleaner_test
+package pocketcleaner
 
 import (
-	"github.com/mrtazz/pocketcleaner"
 	"io/ioutil"
 	"reflect"
 	"testing"
@@ -15,7 +14,7 @@ func expect(t *testing.T, a interface{}, b interface{}) {
 
 func TestParsePacketResponse(t *testing.T) {
 	input, _ := ioutil.ReadFile("fixtures/pocket_response.json")
-	ret, err := pocketcleaner.ParsePocketResponse(string(input))
+	ret, err := ParsePocketResponse(string(input))
 
 	expect(t, err, nil)
 	expect(t, ret.Since, uint(1448244422))
@@ -26,15 +25,15 @@ func TestParsePacketResponse(t *testing.T) {
 
 func TestFilterOutNewestItems(t *testing.T) {
 	input, _ := ioutil.ReadFile("fixtures/pocket_response.json")
-	items, err := pocketcleaner.ParsePocketResponse(string(input))
+	items, err := ParsePocketResponse(string(input))
 	expect(t, err, nil)
-	arr := make(pocketcleaner.PocketItemArray, 0)
+	arr := make(PocketItemArray, 0)
 
 	for _, v := range items.List {
 		arr = append(arr, v)
 	}
 
-	ret := pocketcleaner.FilterOutNewestItems(arr, 5)
+	ret := FilterOutNewestItems(arr, 5)
 
 	expect(t, len(ret), 11)
 
@@ -61,7 +60,7 @@ func TestFilterOutNewestItems(t *testing.T) {
 		expect(t, ret[tt.id].TimeAdded, tt.timestamp)
 	}
 
-	ret2 := pocketcleaner.FilterOutNewestItems(arr, 20)
+	ret2 := FilterOutNewestItems(arr, 20)
 	expect(t, len(ret2), 0)
 
 }
