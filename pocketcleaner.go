@@ -4,6 +4,7 @@ package pocketcleaner
 
 import (
 	"encoding/json"
+	"net/http"
 	"sort"
 )
 
@@ -65,13 +66,33 @@ type PocketResponse struct {
 	Since      uint             `json:"since"`
 }
 
-func GetAllPocketItems() {
+// client struct to interact with the API. This mostly holds the API token
+// and secret, but also provides a way to mock out the HTTP client library so
+// the code is easier to test.
+type PocketClient struct {
+	BaseURL        string
+	ConsumerSecret string
+	APIToken       string
+	HTTPClient     *http.Client
+	KeepCount      int
+}
+
+// PocketClientWithKeys returns a PocketClient with the provided token and
+// consumer secret set as well as the provided number of articles to keep.
+func PocketClientWithToken(apitoken string, consumer_secret string, to_keep int) *PocketClient {
+	return &PocketClient{
+		ConsumerSecret: consumer_secret,
+		APIToken:       apitoken,
+		KeepCount:      to_keep,
+		HTTPClient:     &http.Client{},
+		BaseURL:        "https://getpocket.com/v3/",
+	}
 }
 
 // filters out the newest `count` items from an array of PocketItems and
 // returns the resulting array. This is so the returned array can be fed
 // directly into ArchiveItems.
-func FilterOutNewestItems(list PocketItemArray, count int) PocketItemArray {
+func filterOutNewestItems(list PocketItemArray, count int) PocketItemArray {
 	if len(list) < count {
 		return make([]PocketItem, 0)
 	}
@@ -80,17 +101,38 @@ func FilterOutNewestItems(list PocketItemArray, count int) PocketItemArray {
 	return list[0 : len(list)-count]
 }
 
-func ArchiveItems() {
-}
-
-func CallPocketAPI(method string, consumer_key string, access_token string) {
-}
-
 // this parses a JSON string into a PocketResponse object. It basically only
 // calls json.Unmarshal() but it's stuck into a function for usability and
 // testability.
-func ParsePocketResponse(response string) (PocketResponse, error) {
+func parsePocketResponse(response string) (PocketResponse, error) {
 	ret := PocketResponse{}
 	err := json.Unmarshal([]byte(response), &ret)
 	return ret, err
+}
+
+// get all items from the configured pocket account. This is used to then
+// filter out the ones to keep and archive the rest
+func (c *PocketClient) getAllPocketItems() (PocketItemArray, error) {
+	ret := make(PocketItemArray, 0)
+
+	return ret, nil
+}
+
+// all items passed into this function will be archived. If one or more items
+// couldn't be archived, error is != nil and the returned array contains all
+// items that couldn't be archived
+func (c *PocketClient) archiveItems(list PocketItemArray) (error, PocketItemArray) {
+	ret := make(PocketItemArray, 0)
+	return nil, ret
+}
+
+// helper method to call the pocket API via different methods
+func (c *PocketClient) callPocketAPI(method string) {
+}
+
+// this is the main interface to use this from. After configuring the client
+// with access token and consumer secret and the number of items to keep, just
+// run this method and it will clean up your pocket account.
+func (c *PocketClient) CleanUpItems() error {
+	return nil
 }
