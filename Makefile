@@ -59,13 +59,13 @@ deb: $(SOURCES)
     usr
 
 test:
-	@go test .
+	@go test -v .
 
 vet:
 	@go tool vet .
 
 coverage:
-	@-go test -coverprofile=cover.out github.com/mrtazz/$(NAME)
+	@-go test -v -coverprofile=cover.out github.com/mrtazz/$(NAME)
 	@-go tool cover -html=cover.out -o cover.html
 
 benchmark:
