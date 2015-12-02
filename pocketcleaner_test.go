@@ -1,6 +1,7 @@
 package pocketcleaner
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,8 +13,8 @@ import (
 
 type pocketMock struct {
 	JSON      string
-	Response  PocketResponse
-	ItemArray PocketItemArray
+	Response  pocketResponse
+	ItemArray pocketItemArray
 	Client    *PocketClient
 	Server    *httptest.Server
 }
@@ -26,8 +27,8 @@ type mockSetup struct {
 // gratefully taken and adapted from
 // http://keighl.com/post/mocking-http-responses-in-golang/
 func expect(t *testing.T, a interface{}, b interface{}) {
-	if a != b {
-		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
+	if reflect.DeepEqual(a, b) == false {
+		t.Errorf("Expected: %v (type %v) - Got: %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
 	}
 }
 
@@ -90,9 +91,9 @@ func TestFilterOutNewestItems(t *testing.T) {
 	expect(t, len(ret), 11)
 
 	var flagtests = []struct {
-		id          int
-		timestamp   uint64
-		given_title string
+		id         int
+		timestamp  uint64
+		givenTitle string
 	}{
 		{0, 1385319303, "Silicon Allee » Bootstrapping Business: Grow Your Company Without VC Fundin"},
 		{1, 1394546312, "Your Marriage Will Fail, by Alicia Liu | Model View Culture"},
@@ -108,7 +109,7 @@ func TestFilterOutNewestItems(t *testing.T) {
 	}
 
 	for _, tt := range flagtests {
-		expect(t, ret[tt.id].GivenTitle, tt.given_title)
+		expect(t, ret[tt.id].GivenTitle, tt.givenTitle)
 		expect(t, ret[tt.id].TimeAdded, tt.timestamp)
 	}
 

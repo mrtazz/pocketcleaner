@@ -4,18 +4,23 @@ package pocketcleaner
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"sort"
+	"time"
 )
 
-// type for the actual item types coming from the pocket API. The most
-// important bit here for the cleaner functionality is the TimeAdded.
-type PocketItem struct {
+// type for the actual item types coming from the pocket
+// API. The most important bit here for the cleaner functionality is the
+// TimeAdded.
+type pocketItem struct {
 	GivenTitle    string `json:"given_title"`
 	IsArticle     string `json:"is_article"`
 	ResolvedID    string `json:"resolved_id"`
 	Status        string `json:"status"`
-	SortId        uint   `json:"sort_id"`
+	SortID        uint   `json:"sort_id"`
 	HasImage      string `json:"has_image"`
 	Excerpt       string `json:"excerpt"`
 	TimeFavorited string `json:"time_favorited"`
@@ -26,47 +31,54 @@ type PocketItem struct {
 	Favorite      string `json:"favorite"`
 	HasVideo      string `json:"has_video"`
 	TimeAdded     uint64 `json:"time_added,string"`
-	ResolvedUrl   string `json:"resolved_url"`
-	GivenUrl      string `json:"given_url"`
+	ResolvedURL   string `json:"resolved_url"`
+	GivenURL      string `json:"given_url"`
 	IsIndex       string `json:"is_index"`
 	ItemID        string `json:"item_id"`
 }
 
-// implement sort interface for PocketItemArray.
-type PocketItemArray []PocketItem
+// PocketItemArray implement sort interface for PocketItemArray.
+type pocketItemArray []pocketItem
 
-func (list PocketItemArray) Len() int {
+func (list pocketItemArray) Len() int {
 	return len(list)
 }
 
-func (list PocketItemArray) Less(i, j int) bool {
+func (list pocketItemArray) Less(i, j int) bool {
 	return list[i].TimeAdded < list[j].TimeAdded
 }
 
-func (list PocketItemArray) Swap(i, j int) {
+func (list pocketItemArray) Swap(i, j int) {
 	list[i], list[j] = list[j], list[i]
 }
 
 // type declaration for the list of pocket articles in the API response
-type PocketItemList map[string]PocketItem
+type pocketItemList map[string]pocketItem
 
 // search meta type for parsing out the pocket API response
-type PocketSearchMeta struct {
+type pocketSearchMeta struct {
 	SearchType string `json:"search_type"`
 }
 
 // type to hold the response of a call to the pocket API. The only thing we
 // are really interested in here is the list of articles.
-type PocketResponse struct {
-	SearchMeta PocketSearchMeta `json:"search_meta"`
+type pocketResponse struct {
+	SearchMeta pocketSearchMeta `json:"search_meta"`
 	Status     uint             `json:"status"`
 	Complete   uint             `json:"complete"`
-	List       PocketItemList   `json:"list"`
+	List       pocketItemList   `json:"list"`
 	Error      bool             `json:"error"`
 	Since      uint             `json:"since"`
 }
 
-// client struct to interact with the API. This mostly holds the API token
+type pocketArchiveItem struct {
+	Action string `json:"action"`
+	ID     string `json:"item_id"`
+	Time   string `json:"time"`
+}
+type pocketArchiveItemArray []pocketArchiveItem
+
+// PocketClient struct to interact with the API. This mostly holds the API token
 // and secret, but also provides a way to mock out the HTTP client library so
 // the code is easier to test.
 type PocketClient struct {
@@ -77,13 +89,13 @@ type PocketClient struct {
 	KeepCount      int
 }
 
-// PocketClientWithKeys returns a PocketClient with the provided token and
+// PocketClientWithToken returns a PocketClient with the provided token and
 // consumer secret set as well as the provided number of articles to keep.
-func PocketClientWithToken(apitoken string, consumer_secret string, to_keep int) *PocketClient {
+func PocketClientWithToken(apiToken string, consumerSecret string, toKeep int) *PocketClient {
 	return &PocketClient{
-		ConsumerSecret: consumer_secret,
-		APIToken:       apitoken,
-		KeepCount:      to_keep,
+		ConsumerSecret: consumerSecret,
+		APIToken:       apiToken,
+		KeepCount:      toKeep,
 		HTTPClient:     &http.Client{},
 		BaseURL:        "https://getpocket.com/v3/",
 	}
@@ -92,9 +104,9 @@ func PocketClientWithToken(apitoken string, consumer_secret string, to_keep int)
 // filters out the newest `count` items from an array of PocketItems and
 // returns the resulting array. This is so the returned array can be fed
 // directly into ArchiveItems.
-func filterOutNewestItems(list PocketItemArray, count int) PocketItemArray {
+func filterOutNewestItems(list pocketItemArray, count int) pocketItemArray {
 	if len(list) < count {
-		return make([]PocketItem, 0)
+		return make([]pocketItem, 0)
 	}
 	sort.Sort(list)
 
@@ -104,9 +116,8 @@ func filterOutNewestItems(list PocketItemArray, count int) PocketItemArray {
 // this parses a JSON string into a PocketResponse object. It basically only
 // calls json.Unmarshal() but it's stuck into a function for usability and
 // testability.
-func parsePocketResponse(response string) (PocketResponse, error) {
-	ret := PocketResponse{}
-	err := json.Unmarshal([]byte(response), &ret)
+func parsePocketResponse(response string) (ret pocketResponse, err error) {
+	err = json.Unmarshal([]byte(response), &ret)
 	return ret, err
 }
 
@@ -130,9 +141,10 @@ func (c *PocketClient) archiveItems(list PocketItemArray) (error, PocketItemArra
 func (c *PocketClient) callPocketAPI(method string) {
 }
 
-// this is the main interface to use this from. After configuring the client
-// with access token and consumer secret and the number of items to keep, just
-// run this method and it will clean up your pocket account.
-func (c *PocketClient) CleanUpItems() error {
-	return nil
+// CleanUpItems is the main method to use this module from. After configuring
+// the client with access token and consumer secret and the number of items to
+// keep, just run this method and it will clean up your pocket account.
+func (c *PocketClient) CleanUpItems() (err error) {
+	err = errors.New("method not implemented")
+	return err
 }
