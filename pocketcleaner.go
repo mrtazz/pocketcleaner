@@ -123,22 +123,65 @@ func parsePocketResponse(response string) (ret pocketResponse, err error) {
 
 // get all items from the configured pocket account. This is used to then
 // filter out the ones to keep and archive the rest
-func (c *PocketClient) getAllPocketItems() (PocketItemArray, error) {
-	ret := make(PocketItemArray, 0)
+func (c *PocketClient) getAllPocketItems() (ret pocketItemArray, err error) {
+	body, apiErr := c.callPocketAPI("get", nil)
+	if apiErr != nil {
+		return ret, apiErr
+	}
 
-	return ret, nil
+	pocketResponse, parseErr := parsePocketResponse(body)
+	if parseErr != nil {
+		return ret, parseErr
+	}
+
+	ret = make(pocketItemArray, 0, len(pocketResponse.List))
+
+	for _, v := range pocketResponse.List {
+		ret = append(ret, v)
+	}
+
+	return ret, err
 }
 
 // all items passed into this function will be archived. If one or more items
 // couldn't be archived, error is != nil and the returned array contains all
 // items that couldn't be archived
-func (c *PocketClient) archiveItems(list PocketItemArray) (error, PocketItemArray) {
-	ret := make(PocketItemArray, 0)
-	return nil, ret
+func (c *PocketClient) archiveItems(list pocketItemArray) (err error, ret pocketItemArray) {
+	var currentTime = time.Now().UTC().Format(time.UnixDate)
+	archiveItems := make(pocketArchiveItemArray, 0, len(list))
+	for _, v := range list {
+		archiveItems = append(archiveItems, pocketArchiveItem{Action: "archive",
+			ID: v.ItemID, Time: currentTime})
+	}
+	err = errors.New("method not implemented")
+	ret = make(pocketItemArray, 0)
+	return err, ret
 }
 
-// helper method to call the pocket API via different methods
-func (c *PocketClient) callPocketAPI(method string) {
+// helper method to call the pocket API via different methods. It just returns
+// the body as a string so the caller can decide what the return type is and
+// parse it into a Go type as needed.
+func (c *PocketClient) callPocketAPI(method string, data interface{}) (ret string, err error) {
+	if method != "get" && method != "send" {
+		return ret, fmt.Errorf("unknown method: %s", method)
+	}
+	url := fmt.Sprintf("%s/%s?consumer_key=%s&access_token=%s",
+		c.BaseURL, method, c.ConsumerSecret, c.APIToken)
+	if data != nil {
+	}
+	var response *http.Response
+	response, err = c.HTTPClient.Get(url)
+	if err != nil {
+		return ret, err
+	}
+	defer response.Body.Close()
+	var respBody []byte
+	respBody, err = ioutil.ReadAll(response.Body)
+	if err != nil {
+		return ret, err
+	}
+	ret = string(respBody)
+	return ret, err
 }
 
 // CleanUpItems is the main method to use this module from. After configuring
