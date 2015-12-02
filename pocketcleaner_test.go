@@ -1,7 +1,7 @@
 package pocketcleaner
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -125,21 +125,27 @@ func TestFilterOutNewestItems(t *testing.T) {
 }
 
 func TestArchiveItems(t *testing.T) {
-	pm := testSetup(mockSetup{200, "foo"})
+	pm := testSetup(mockSetup{200, `{"action_results":[],"status":1}`})
 	mockedPocketItemArray, server, client := pm.ItemArray, pm.Server, pm.Client
 	defer server.Close()
-	err, ret := client.archiveItems(mockedPocketItemArray)
+	err, _ := client.archiveItems(mockedPocketItemArray)
 	expect(t, err, nil)
-	expect(t, len(ret), 0)
+}
+
+func TestArchiveItemsParseError(t *testing.T) {
+	pm := testSetup(mockSetup{200, `tatus":1}`})
+	mockedPocketItemArray, server, client := pm.ItemArray, pm.Server, pm.Client
+	defer server.Close()
+	err, _ := client.archiveItems(mockedPocketItemArray)
+	expect(t, err.Error(), "invalid character 'a' in literal true (expecting 'r')")
 }
 
 func TestArchiveItemsFailed(t *testing.T) {
-	pm := testSetup(mockSetup{200, `{"action_results":[true],"status":1}`})
+	pm := testSetup(mockSetup{200, `{"action_results":[],"status":0}`})
 	mockedPocketItemArray, server, client := pm.ItemArray, pm.Server, pm.Client
 	defer server.Close()
-	err, ret := client.archiveItems(mockedPocketItemArray)
-	expect(t, err, errors.New("failed to archive items"))
-	expect(t, len(ret), 1)
+	err, _ := client.archiveItems(mockedPocketItemArray)
+	expect(t, err.Error(), "Failed to archive some items")
 }
 
 func TestCallPocketApiDefaultNotImplemented(t *testing.T) {
@@ -147,11 +153,21 @@ func TestCallPocketApiDefaultNotImplemented(t *testing.T) {
 	server, client := pm.Server, pm.Client
 	defer server.Close()
 	_, err := client.callPocketAPI("foo", nil)
-	expect(t, err.Error(), "method not implemented")
+	expect(t, err.Error(), "unknown method: foo")
 }
 
 func TestCallPocketApiGet(t *testing.T) {
 	pm := testSetup(mockSetup{200, ""})
+	server, client := pm.Server, pm.Client
+	defer server.Close()
+	ret, err := client.callPocketAPI("get", nil)
+	expect(t, err, nil)
+	resp, _ := parsePocketResponse(ret)
+	expect(t, resp, pm.Response)
+}
+
+func TestCallPocketApiGetFailed(t *testing.T) {
+	pm := testSetup(mockSetup{404, ""})
 	server, client := pm.Server, pm.Client
 	defer server.Close()
 	ret, err := client.callPocketAPI("get", nil)
@@ -177,6 +193,15 @@ func TestGetAllPocketItems(t *testing.T) {
 	expect(t, len(items), 16)
 }
 
+func TestGetAllPocketItemsParseError(t *testing.T) {
+	pm := testSetup(mockSetup{200, "f"})
+	server, client := pm.Server, pm.Client
+	defer server.Close()
+	items, err := client.getAllPocketItems()
+	expect(t, err.Error(), "invalid character '\\n' in literal false (expecting 'a')")
+	expect(t, len(items), 0)
+}
+
 func TestPocketClientWithToken(t *testing.T) {
 	ret := PocketClientWithToken("bar", "foo", 5)
 	expect(t, "foo", ret.ConsumerSecret)
@@ -185,9 +210,23 @@ func TestPocketClientWithToken(t *testing.T) {
 }
 
 func TestCleanUpItems(t *testing.T) {
-	pm := testSetup(mockSetup{200, "foo"})
+	pm := testSetup(mockSetup{200, ""})
 	server, client := pm.Server, pm.Client
 	defer server.Close()
 	err := client.CleanUpItems()
 	expect(t, err, nil)
+}
+
+func TestPocketArchiveItemJSON(t *testing.T) {
+	item := &pocketArchiveItem{"archive", "123", "123456789"}
+	ret, err := json.Marshal(item)
+	expect(t, err, nil)
+	expect(t, string(ret), `{"action":"archive","item_id":"123","time":"123456789"}`)
+}
+
+func TestPocketArchiveResponseJSONParsing(t *testing.T) {
+	item := &pocketArchiveResponse{[]bool{true, true}, 1}
+	ret, err := json.Marshal(item)
+	expect(t, err, nil)
+	expect(t, string(ret), `{"action_results":[true,true],"status":1}`)
 }

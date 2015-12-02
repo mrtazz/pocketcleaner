@@ -4,10 +4,10 @@ package pocketcleaner
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"sort"
 	"time"
 )
@@ -71,12 +71,19 @@ type pocketResponse struct {
 	Since      uint             `json:"since"`
 }
 
+// pocketArchiveItem is the type for an item to be archived. The pocket API
+// expects the JSON version of this
 type pocketArchiveItem struct {
 	Action string `json:"action"`
 	ID     string `json:"item_id"`
 	Time   string `json:"time"`
 }
 type pocketArchiveItemArray []pocketArchiveItem
+
+type pocketArchiveResponse struct {
+	ActionResults []bool `json:"action_results"`
+	Status        int    `json:"status"`
+}
 
 // PocketClient struct to interact with the API. This mostly holds the API token
 // and secret, but also provides a way to mock out the HTTP client library so
@@ -103,7 +110,7 @@ func PocketClientWithToken(apiToken string, consumerSecret string, toKeep int) *
 
 // filters out the newest `count` items from an array of PocketItems and
 // returns the resulting array. This is so the returned array can be fed
-// directly into ArchiveItems.
+// directly into archiveItems.
 func filterOutNewestItems(list pocketItemArray, count int) pocketItemArray {
 	if len(list) < count {
 		return make([]pocketItem, 0)
@@ -153,8 +160,18 @@ func (c *PocketClient) archiveItems(list pocketItemArray) (err error, ret pocket
 		archiveItems = append(archiveItems, pocketArchiveItem{Action: "archive",
 			ID: v.ItemID, Time: currentTime})
 	}
-	err = errors.New("method not implemented")
-	ret = make(pocketItemArray, 0)
+	var response string
+	response, err = c.callPocketAPI("send", archiveItems)
+	var archiveResponse pocketArchiveResponse
+	err = json.Unmarshal([]byte(response), &archiveResponse)
+	if err != nil {
+		return err, ret
+	}
+
+	if archiveResponse.Status == 0 {
+		return fmt.Errorf("Failed to archive some items"), ret
+	}
+
 	return err, ret
 }
 
@@ -165,12 +182,18 @@ func (c *PocketClient) callPocketAPI(method string, data interface{}) (ret strin
 	if method != "get" && method != "send" {
 		return ret, fmt.Errorf("unknown method: %s", method)
 	}
-	url := fmt.Sprintf("%s/%s?consumer_key=%s&access_token=%s",
+	apiURL := fmt.Sprintf("%s/%s?consumer_key=%s&access_token=%s",
 		c.BaseURL, method, c.ConsumerSecret, c.APIToken)
 	if data != nil {
+		actionsJSON, err := json.Marshal(data)
+		if err != nil {
+			return ret, err
+		}
+		actions := url.QueryEscape(string(actionsJSON))
+		apiURL = fmt.Sprintf("%s&actions=%s", apiURL, actions)
 	}
 	var response *http.Response
-	response, err = c.HTTPClient.Get(url)
+	response, err = c.HTTPClient.Get(apiURL)
 	if err != nil {
 		return ret, err
 	}
@@ -188,6 +211,17 @@ func (c *PocketClient) callPocketAPI(method string, data interface{}) (ret strin
 // the client with access token and consumer secret and the number of items to
 // keep, just run this method and it will clean up your pocket account.
 func (c *PocketClient) CleanUpItems() (err error) {
-	err = errors.New("method not implemented")
+	var items pocketItemArray
+	items, err = c.getAllPocketItems()
+	if err != nil {
+		return err
+	}
+	items = filterOutNewestItems(items, c.KeepCount)
+	err, items = c.archiveItems(items)
+	if err != nil {
+		for _, v := range items {
+			fmt.Println(fmt.Sprintf("failed to archive item: %s", v.GivenTitle))
+		}
+	}
 	return err
 }
