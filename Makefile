@@ -27,7 +27,7 @@ $(PREFIX)/bin:
 $(PREFIX)/bin/$(NAME): $(NAME) $(PREFIX)/bin
 	install -m 755 $< $@
 
-.PHONY: test rpm deb local-install packages
+.PHONY: test rpm deb local-install packages coverage vet
 
 local-install:
 	$(MAKE) install PREFIX=usr
@@ -61,9 +61,12 @@ deb: $(SOURCES)
 test:
 	@go test .
 
+vet:
+	@go tool vet .
+
 coverage:
-	@go test -coverprofile=cover.out github.com/mrtazz/$(NAME)
-	@go tool cover -html=cover.out -o cover.html
+	@-go test -coverprofile=cover.out github.com/mrtazz/$(NAME)
+	@-go tool cover -html=cover.out -o cover.html
 
 benchmark:
 	@echo "Running tests..."
