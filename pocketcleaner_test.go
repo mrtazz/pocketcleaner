@@ -36,8 +36,23 @@ func expect(t *testing.T, a interface{}, b interface{}) {
 // objects. If arguments are passed, the first one should be the return code
 // of the mock server and the second one the return body
 func testSetup(ms mockSetup) pocketMock {
+	input, _ := ioutil.ReadFile("fixtures/pocket_response.json")
+	mockedJSON := string(input)
+	mockedResponse, _ := parsePocketResponse(mockedJSON)
+	mockedPocketItemArray := make(pocketItemArray, 0, len(mockedResponse.List))
+
+	for _, v := range mockedResponse.List {
+		mockedPocketItemArray = append(mockedPocketItemArray, v)
+	}
+
+	var body string
 	code := ms.Code
-	body := ms.Body
+	if ms.Body != "" {
+		body = ms.Body
+	} else {
+		body = mockedJSON
+	}
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(code)
 		w.Header().Set("Content-Type", "application/json")
@@ -57,15 +72,6 @@ func testSetup(ms mockSetup) pocketMock {
 		APIToken:       "bar",
 		HTTPClient:     httpClient,
 		KeepCount:      5,
-	}
-
-	input, _ := ioutil.ReadFile("fixtures/pocket_response.json")
-	mockedJSON := string(input)
-	mockedResponse, _ := parsePocketResponse(mockedJSON)
-	mockedPocketItemArray := make(PocketItemArray, 0)
-
-	for _, v := range mockedResponse.List {
-		mockedPocketItemArray = append(mockedPocketItemArray, v)
 	}
 
 	return pocketMock{
