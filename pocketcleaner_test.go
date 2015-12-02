@@ -132,3 +132,62 @@ func TestArchiveItems(t *testing.T) {
 	expect(t, err, nil)
 	expect(t, len(ret), 0)
 }
+
+func TestArchiveItemsFailed(t *testing.T) {
+	pm := testSetup(mockSetup{200, `{"action_results":[true],"status":1}`})
+	mockedPocketItemArray, server, client := pm.ItemArray, pm.Server, pm.Client
+	defer server.Close()
+	err, ret := client.archiveItems(mockedPocketItemArray)
+	expect(t, err, errors.New("failed to archive items"))
+	expect(t, len(ret), 1)
+}
+
+func TestCallPocketApiDefaultNotImplemented(t *testing.T) {
+	pm := testSetup(mockSetup{200, "foo"})
+	server, client := pm.Server, pm.Client
+	defer server.Close()
+	_, err := client.callPocketAPI("foo", nil)
+	expect(t, err.Error(), "method not implemented")
+}
+
+func TestCallPocketApiGet(t *testing.T) {
+	pm := testSetup(mockSetup{200, ""})
+	server, client := pm.Server, pm.Client
+	defer server.Close()
+	ret, err := client.callPocketAPI("get", nil)
+	expect(t, err, nil)
+	resp, _ := parsePocketResponse(ret)
+	expect(t, resp, pm.Response)
+}
+
+func TestCallPocketApiSend(t *testing.T) {
+	pm := testSetup(mockSetup{200, "foo"})
+	server, client := pm.Server, pm.Client
+	defer server.Close()
+	_, err := client.callPocketAPI("send", nil)
+	expect(t, err, nil)
+}
+
+func TestGetAllPocketItems(t *testing.T) {
+	pm := testSetup(mockSetup{200, ""})
+	server, client := pm.Server, pm.Client
+	defer server.Close()
+	items, err := client.getAllPocketItems()
+	expect(t, err, nil)
+	expect(t, len(items), 16)
+}
+
+func TestPocketClientWithToken(t *testing.T) {
+	ret := PocketClientWithToken("bar", "foo", 5)
+	expect(t, "foo", ret.ConsumerSecret)
+	expect(t, "bar", ret.APIToken)
+	expect(t, 5, ret.KeepCount)
+}
+
+func TestCleanUpItems(t *testing.T) {
+	pm := testSetup(mockSetup{200, "foo"})
+	server, client := pm.Server, pm.Client
+	defer server.Close()
+	err := client.CleanUpItems()
+	expect(t, err, nil)
+}
