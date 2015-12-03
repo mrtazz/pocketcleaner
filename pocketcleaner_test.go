@@ -244,6 +244,14 @@ func TestCleanUpItems(t *testing.T) {
 	expect(t, err, nil)
 }
 
+func TestCleanUpItemsGetItemsError(t *testing.T) {
+	pm := testSetup(mockSetup{200, "f"})
+	server, client := pm.Server, pm.Client
+	defer server.Close()
+	err := client.CleanUpItems()
+	expect(t, err.Error(), "invalid character '\\n' in literal false (expecting 'a')")
+}
+
 func TestPocketArchiveItemJSON(t *testing.T) {
 	item := &pocketArchiveItem{"archive", "123", "123456789"}
 	ret, err := json.Marshal(item)
