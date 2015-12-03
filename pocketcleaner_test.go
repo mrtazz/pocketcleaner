@@ -184,6 +184,23 @@ func TestCallPocketApiSend(t *testing.T) {
 	expect(t, err, nil)
 }
 
+func TestCallPocketApiGetHTTPError(t *testing.T) {
+	pm := testSetup(mockSetup{200, "foo"})
+	server, client := pm.Server, pm.Client
+	server.Close()
+	_, err := client.callPocketAPI("get", nil)
+	var urlError *url.Error
+	expect(t, reflect.TypeOf(err), reflect.TypeOf(urlError))
+}
+
+func TestCallPocketApiSendParseError(t *testing.T) {
+	pm := testSetup(mockSetup{200, "foo"})
+	server, client := pm.Server, pm.Client
+	defer server.Close()
+	_, err := client.callPocketAPI("send", client)
+	expect(t, err.Error(), "json: unsupported type: func(*http.Request) (*url.URL, error)")
+}
+
 func TestGetAllPocketItems(t *testing.T) {
 	pm := testSetup(mockSetup{200, ""})
 	server, client := pm.Server, pm.Client
@@ -191,6 +208,16 @@ func TestGetAllPocketItems(t *testing.T) {
 	items, err := client.getAllPocketItems()
 	expect(t, err, nil)
 	expect(t, len(items), 16)
+}
+
+func TestGetAllPocketItemsApiError(t *testing.T) {
+	pm := testSetup(mockSetup{200, ""})
+	server, client := pm.Server, pm.Client
+	server.Close()
+	items, err := client.getAllPocketItems()
+	var urlError *url.Error
+	expect(t, reflect.TypeOf(err), reflect.TypeOf(urlError))
+	expect(t, len(items), 0)
 }
 
 func TestGetAllPocketItemsParseError(t *testing.T) {
