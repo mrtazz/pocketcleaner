@@ -12,7 +12,7 @@ BUILDTIME = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILDER = $(shell echo "`git config user.name` <`git config user.email`>")
 PKG_RELEASE ?= 1
 PROJECT_URL="https://github.com/mrtazz/$(NAME)"
-SOURCES=cmd/pocketcleaner/main.go
+SOURCES=cmd/pocketcleaner/main.go pocketcleaner.go
 LDFLAGS=-X 'main.version=$(VERSION)' \
 				-X 'main.buildTime=$(BUILDTIME)'\
 				-X 'main.builder=$(BUILDER)'\
