@@ -41,27 +41,36 @@ Pocketcleaner doesn't come with any auth keys, so you will have to get your
 own. The following steps are taken from
 [here](http://www.jamesfmackenzie.com/getting-started-with-the-pocket-developer-api/).
 
-1. Create an app in the [developer portal](http://getpocket.com/developer/)
+#### 1. Create an app in the [developer portal](http://getpocket.com/developer/)
+
 Make sure it has at least the `retrieve` and `modify` permissions.
 
-2. Get a request token
+#### 2. Get a request token
+
 ```
 curl https://getpocket.com/v3/oauth/request -X POST \
 -H "Content-Type: application/json" -H "X-Accept: application/json" \
 -d '{"consumer_key":"your-key-here","redirect_uri":"http://www.google.com"}'
 ```
-3. Authorize the app
+
+#### 3. Authorize the app
+
 Visit the following URL in your browser and authorize the app.
+
 ```
 https://getpocket.com/auth/authorize?request_token=request-token-here&redirect_uri=http://www.google.com
 ```
-4. Convert request token to access token
+
+#### 4. Convert request token to access token
+
 ```
 curl https://getpocket.com/v3/oauth/authorize -X POST \
 -H "Content-Type: application/json" -H "X-Accept: application/json" \
 -d '{"consumer_key":"your-key-here","code":"request-token"}'
 ```
-5. Make sure the token works by getting a list of your saved items
+
+#### 5. Make sure the token works by getting a list of your saved items
+
 ```
 curl http://getpocket.com/v3/get -X POST -H "Content-Type: application/json" \
 -H "X-Accept: application/json" \
@@ -70,15 +79,8 @@ curl http://getpocket.com/v3/get -X POST -H "Content-Type: application/json" \
 
 ### Install pocketcleaner
 
-There are rpms for linux up [on
-packagecloud.io][https://packagecloud.io/mrtazz/pocketcleaner] but you can
-also just
-
-```
-go install github.com/mrtazz/pocketcleaner
-```
-
-or clone the repo and build the binary yourself
+There are packages for linux up [on
+packagecloud.io](https://packagecloud.io/mrtazz/pocketcleaner) but you can also just clone the repo and build the binary yourself.
 
 ```
 go get github.com/mrtazz/pocketcleaner
