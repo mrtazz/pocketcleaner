@@ -1,9 +1,13 @@
 language: go
 go:
-  - tip
+- tip
 before_install:
-  - go get github.com/axw/gocov/gocov
-  - go get github.com/mattn/goveralls
-  - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+- go get github.com/axw/gocov/gocov
+- go get github.com/mattn/goveralls
+- if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover;
+  fi
 script:
-  - $HOME/gopath/bin/goveralls -service=travis-ci
+- $HOME/gopath/bin/goveralls -service=travis-ci
+env:
+  global:
+    secure: oNmSylz2QfFRsgZNPXQMUF3PouJb7sQZigDC9cKZRytLA0arMUQyPhuMoJ0EE+toz8TYh7Fw+pAafIoCbxpvsbcUXgw4ZT6/swrz1cVH8xL2wEEwYktL3rX1D4IbMvq1ew09Gsnfe9XnKBPv6JUjOrdP2zUqLXpRbGsRsM13gDXbtee9x0v0iib5zP0RxMHvmyM0oES8IloC1l2IAqkVIJ1ub0/0ocNsCgYrv7ppVFQ/fqu+i77x2YGOhOuQqTRMyNC5RbOjI2GS3xNzXs7Wj23YoYz3G54VwAustV7s5V5Lt8m5nRkq1x7sfd/DMeB7Rik1b7af3Fr22RNLMxyUiaq3EQPQQFiDKFb7ds6MGuKP39feetSlqYxb2R7x2PExDKSBLPrHHwH/RxlC6UnYnGP8HDybjGB3pfjI7I7jSgwNddn29Tz34gSLWOCc+lNXVqwqQK7U8ylNC1FNnLtZIsZpXVPjZy4saNBKpIjnT8+LZgvBYTPIFpOtpkSMDv0lejvey0FvAIUqkJb6/ENighyl8+y/FbxHTXn12Yc6Fxpxty/hJVjJiMmC5CudaFxujfgjO4lZZRDC71Y+U3aXGot0Jq7NuVmoSAXAUhYPecnzgNw62WHiTxwIejjJcTN6sGQLef56gU0BcXQUmUpJHf2wu0KIHEiV4Q6HWbrXCGs=
