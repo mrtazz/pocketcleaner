@@ -1,3 +1,11 @@
 pocketcleaner
+pocketcleaner.1
+
+# code coverage data
 cover.out
 cover.html
+
+# packaging artefacts
+usr
+*.deb
+*.rpm
