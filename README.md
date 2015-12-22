@@ -81,3 +81,14 @@ go get github.com/mrtazz/pocketcleaner
 cd $GOPATH/src/github.com/mrtazz/pocketcleaner
 make
 ```
+
+## Configuration
+pocketcleaner reads the configuration file `$HOME/.pocketcleaner.ini` to get
+consumer key, access token, and the number of items to keep. The format looks
+like this:
+
+```
+consumer_key      = consumer-key
+access_token      = access-token
+keep_count        = 100
+```
