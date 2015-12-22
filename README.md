@@ -14,17 +14,16 @@ items.
 
 ## Usage
 ```
-pocketcleaner
-pocketcleaner [--config=<config>]
-pocketcleaner [--keep=<keepCount>]
-pocketcleaner -d | --debug
-pocketcleaner -h | --help
-pocketcleaner --version
+pocketcleaner keeps your pocket clean
+
+Usage:
+  pocketcleaner [-d | --debug] [--keep=<keepCount>]
+  pocketcleaner -h | --help | -v | --version
 
 Options:
   -h --help          Show this screen.
   -d --debug         Show debug information.
-  --version          Show version.
+  -v --version       Show version.
   --config=<config>  Config file to use
   --keep=<keepCount> Count of items to keep
 ```
