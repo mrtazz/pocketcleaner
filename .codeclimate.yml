@@ -1,0 +1,16 @@
+---
+engines:
+  fixme:
+    enabled: true
+  gofmt:
+    enabled: true
+  golint:
+    enabled: true
+  govet:
+    enabled: true
+ratings:
+  paths:
+    - pocketcleaner.go
+    - cmd/pocketcleaner/main.go
+exclude_paths:
+- vendor/**/*
