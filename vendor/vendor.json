@@ -3,6 +3,11 @@
 	"ignore": "test",
 	"package": [
 		{
+			"path": "github.com/Unknwon/goconfig",
+			"revision": "18bc852dc01720ee9f0e9e0a01a1bdbc8744095c",
+			"revisionTime": "2015-10-05T13:47:01-04:00"
+		},
+		{
 			"path": "github.com/docopt/docopt-go",
 			"revision": "854c423c810880e30b9fecdabb12d54f4a92f9bb",
 			"revisionTime": "2014-11-28T10:09:34-07:00"
