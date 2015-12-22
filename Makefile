@@ -17,6 +17,7 @@ LDFLAGS=-X 'main.version=$(VERSION)' \
 				-X 'main.buildTime=$(BUILDTIME)'\
 				-X 'main.builder=$(BUILDER)'\
 				-X 'main.goversion=$(GOVERSION)'
+TARGETS=$(PREFIX)/bin/$(NAME) $(PREFIX)/share/man/man1/$(NAME).1
 
 $(NAME): $(SOURCES)
 	go build -ldflags "$(LDFLAGS)" -o $@ $<
@@ -27,7 +28,18 @@ $(PREFIX)/bin:
 $(PREFIX)/bin/$(NAME): $(NAME) $(PREFIX)/bin
 	install -m 755 $< $@
 
+$(NAME).1: $(NAME).1.txt
+	txt2man -t "$(NAME)" -s 1 -v "User Manual" $< > $@
+
+$(PREFIX)/share/man/man1:
+	install -m 755 -d $@
+
+$(PREFIX)/share/man/man1/$(NAME).1: $(NAME).1 $(PREFIX)/share/man/man1
+	install -m 755 $< $@
+
 .PHONY: test rpm deb local-install packages coverage vet
+
+install: $(TARGETS)
 
 local-install:
 	$(MAKE) install PREFIX=usr

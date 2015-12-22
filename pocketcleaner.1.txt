@@ -1,0 +1,24 @@
+
+NAME
+  pocketcleaner - keeps your pocket clean
+
+SYNOPSIS
+
+  pocketcleaner [-d | --debug] [--keep=<keepCount>]
+  pocketcleaner -h | --help | -v | --version
+
+DESCRIPTION
+  tool to archive all items except the newest n in your Pocket list
+
+OPTIONS
+
+  -h --help           Show this screen.
+  -d --debug          Show debug information.
+  -v --version        Show version.
+  --keep=<keepCount>  Count of items to keep
+
+SEE ALSO
+  https://getpocket.com/
+
+AUTHOR
+  Daniel Schauenberg <d@unwiredcouch.com>
