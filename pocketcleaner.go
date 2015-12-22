@@ -4,8 +4,10 @@ package pocketcleaner
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"sort"
@@ -29,7 +31,6 @@ type pocketItem struct {
 	ResolvedTitle string `json:"resolved_title"`
 	TimeUpdated   string `json:"time_updated"`
 	Favorite      string `json:"favorite"`
-	HasVideo      string `json:"has_video"`
 	TimeAdded     uint64 `json:"time_added,string"`
 	ResolvedURL   string `json:"resolved_url"`
 	GivenURL      string `json:"given_url"`
@@ -76,7 +77,7 @@ type pocketResponse struct {
 type pocketArchiveItem struct {
 	Action string `json:"action"`
 	ID     string `json:"item_id"`
-	Time   string `json:"time"`
+	Time   int64  `json:"time,string"`
 }
 type pocketArchiveItemArray []pocketArchiveItem
 
@@ -94,6 +95,23 @@ type PocketClient struct {
 	APIToken       string
 	HTTPClient     *http.Client
 	KeepCount      int
+}
+
+var (
+	// Debug can be set to true to get debug logging from pocketcleaner
+	Debug = false
+)
+
+const (
+	apiBatchSize int = 50
+)
+
+// debugPrint is a helper function to make it easy to print debugging
+// information if the module is used in debug mode
+func debugPrint(message string) {
+	if Debug == true {
+		log.Println(message)
+	}
 }
 
 // PocketClientWithToken returns a PocketClient with the provided token and
@@ -125,6 +143,9 @@ func filterOutNewestItems(list pocketItemArray, count int) pocketItemArray {
 // testability.
 func parsePocketResponse(response string) (ret pocketResponse, err error) {
 	err = json.Unmarshal([]byte(response), &ret)
+	if err != nil {
+		debugPrint(fmt.Sprintf("Error in parsePocketResponse: %s", err.Error()))
+	}
 	return ret, err
 }
 
@@ -154,24 +175,54 @@ func (c *PocketClient) getAllPocketItems() (ret pocketItemArray, err error) {
 // couldn't be archived, error is != nil and the returned array contains all
 // items that couldn't be archived
 func (c *PocketClient) archiveItems(list pocketItemArray) (err error, ret pocketItemArray) {
-	var currentTime = time.Now().UTC().Format(time.UnixDate)
-	archiveItems := make(pocketArchiveItemArray, 0, len(list))
-	for _, v := range list {
+	if len(list) == 0 {
+		return err, ret
+	}
+	var currentTime = time.Now().Unix()
+	archiveItems := make(pocketArchiveItemArray, 0, apiBatchSize)
+	for k, v := range list {
 		archiveItems = append(archiveItems, pocketArchiveItem{Action: "archive",
 			ID: v.ItemID, Time: currentTime})
+
+		// if we have reached the batchSize, let's send the current set of items
+		// off to the API and start a new batch
+		if k%apiBatchSize == 0 {
+
+			err, _ = c.archiveBatch(archiveItems)
+
+			// reset batch container
+			archiveItems = make(pocketArchiveItemArray, 0, apiBatchSize)
+		}
+
 	}
+	err, _ = c.archiveBatch(archiveItems)
+
+	return err, ret
+}
+
+// archiveBatch has almost the same signature as archiveItems but is intended
+// to be used to archive smaller batches of items. This is to encapsulate the
+// actual API handling logic in here and have archiveItems be a bit more about
+// the app logic.
+func (c *PocketClient) archiveBatch(list pocketArchiveItemArray) (err error, ret pocketItemArray) {
 	var response string
-	response, err = c.callPocketAPI("send", archiveItems)
+	response, err = c.callPocketAPI("send", list)
+	if err != nil {
+		debugPrint(fmt.Sprintf("Error in archiveBatch: %s", err.Error()))
+		debugPrint(response)
+		return err, ret
+	}
 	var archiveResponse pocketArchiveResponse
 	err = json.Unmarshal([]byte(response), &archiveResponse)
 	if err != nil {
+		debugPrint(fmt.Sprintf("Error in archiveBatch: %s", err.Error()))
+		debugPrint(response)
 		return err, ret
 	}
 
 	if archiveResponse.Status == 0 {
 		return fmt.Errorf("Failed to archive some items"), ret
 	}
-
 	return err, ret
 }
 
@@ -187,6 +238,7 @@ func (c *PocketClient) callPocketAPI(method string, data interface{}) (ret strin
 	if data != nil {
 		actionsJSON, err := json.Marshal(data)
 		if err != nil {
+			debugPrint(fmt.Sprintf("Error in callPocketAPI: %s", err.Error()))
 			return ret, err
 		}
 		actions := url.QueryEscape(string(actionsJSON))
@@ -195,12 +247,19 @@ func (c *PocketClient) callPocketAPI(method string, data interface{}) (ret strin
 	var response *http.Response
 	response, err = c.HTTPClient.Get(apiURL)
 	if err != nil {
+		debugPrint(fmt.Sprintf("Error in callPocketAPI: %s", err.Error()))
 		return ret, err
+	}
+	if response.StatusCode != 200 {
+		errorMsg := fmt.Sprintf("callPocketAPI got status: %s", response.Status)
+		debugPrint(errorMsg)
+		return ret, errors.New(errorMsg)
 	}
 	defer response.Body.Close()
 	var respBody []byte
 	respBody, err = ioutil.ReadAll(response.Body)
 	if err != nil {
+		debugPrint(fmt.Sprintf("Error in callPocketAPI: %s", err.Error()))
 		return ret, err
 	}
 	ret = string(respBody)
@@ -210,18 +269,22 @@ func (c *PocketClient) callPocketAPI(method string, data interface{}) (ret strin
 // CleanUpItems is the main method to use this module from. After configuring
 // the client with access token and consumer secret and the number of items to
 // keep, just run this method and it will clean up your pocket account.
-func (c *PocketClient) CleanUpItems() (err error) {
+func (c *PocketClient) CleanUpItems() (archived int, err error) {
 	var items pocketItemArray
 	items, err = c.getAllPocketItems()
 	if err != nil {
-		return err
+		debugPrint("Couldn't get pocket items.")
+		return 0, err
 	}
+	itemsCount := len(items)
+	debugPrint(fmt.Sprintf("Got %d items in the pocket list.", itemsCount))
 	items = filterOutNewestItems(items, c.KeepCount)
 	err, items = c.archiveItems(items)
 	if err != nil {
+		debugPrint("couldn't archive items")
 		for _, v := range items {
-			fmt.Println(fmt.Sprintf("failed to archive item: %s", v.GivenTitle))
+			log.Println(fmt.Sprintf("failed to archive item: %s", v.GivenTitle))
 		}
 	}
-	return err
+	return (itemsCount - c.KeepCount), err
 }
