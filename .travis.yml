@@ -8,10 +8,10 @@ before_install:
 - go get github.com/axw/gocov/gocov
 - go get github.com/mattn/goveralls
 - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
-addons:
-  apt:
-    packages:
-      - txt2man
+before_script:
+- wget https://raw.githubusercontent.com/mvertes/txt2man/master/txt2man -O txt2man
+- chmod +x ./txt2man
+- export PATH=$PATH:$PWD
 script:
 - $HOME/gopath/bin/goveralls -service=travis-ci
 after_success:
