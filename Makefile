@@ -5,6 +5,7 @@
 export GO15VENDOREXPERIMENT = 1
 
 NAME=pocketcleaner
+DESC=utility to keep your Pocket list small and manageable. Archives everything in your list except for the newest n items.
 PREFIX ?= /usr/local
 VERSION=$(shell git describe --tags --always --dirty)
 GOVERSION = $(shell go version)
@@ -56,6 +57,7 @@ rpm: $(SOURCES)
 	  fpm -t rpm -s dir \
     --name $(NAME) \
     --version $(VERSION) \
+		--description "$(DESC)" \
     --iteration $(PKG_RELEASE) \
     --epoch 1 \
     --license MIT \
@@ -68,6 +70,7 @@ deb: $(SOURCES)
 	  fpm -t deb -s dir \
     --name $(NAME) \
     --version $(VERSION) \
+		--description "$(DESC)" \
     --iteration $(PKG_RELEASE) \
     --epoch 1 \
     --license MIT \
