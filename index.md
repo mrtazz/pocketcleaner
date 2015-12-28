@@ -8,6 +8,8 @@ title: pocketcleaner
 [![Coverage Status](https://coveralls.io/repos/mrtazz/pocketcleaner/badge.svg?branch=master&service=github)](https://coveralls.io/github/mrtazz/pocketcleaner?branch=master)
 [![Code Climate](https://codeclimate.com/github/mrtazz/pocketcleaner/badges/gpa.svg)](https://codeclimate.com/github/mrtazz/pocketcleaner)
 [![Packagecloud](https://img.shields.io/badge/packagecloud-available-brightgreen.svg)](https://packagecloud.io/mrtazz/pocketcleaner)
+[![GoDoc](https://godoc.org/github.com/mrtazz/pocketcleaner?status.svg)](https://godoc.org/github.com/mrtazz/pocketcleaner)
+[![License](https://img.shields.io/github/license/mrtazz/pocketcleaner.svg)](https://github.com/mrtazz/pocketcleaner/blob/master/LICENSE)
 
 ## Overview
 
