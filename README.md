@@ -5,7 +5,7 @@
 [![Code Climate](https://codeclimate.com/github/mrtazz/pocketcleaner/badges/gpa.svg)](https://codeclimate.com/github/mrtazz/pocketcleaner)
 [![Packagecloud](https://img.shields.io/badge/packagecloud-available-brightgreen.svg)](https://packagecloud.io/mrtazz/pocketcleaner)
 [![GoDoc](https://godoc.org/github.com/mrtazz/pocketcleaner?status.svg)](https://godoc.org/github.com/mrtazz/pocketcleaner)
-[![License](https://img.shields.io/github/license/mrtazz/pocketcleaner.svg)](https://github.com/mrtazz/pocketcleaner/blob/master/LICENSE)
+[![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 
 ## Overview
 
