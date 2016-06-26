@@ -86,6 +86,15 @@ cd $GOPATH/src/github.com/mrtazz/pocketcleaner
 make
 ```
 
+### Docker
+There is also a docker image on docker hub which you can use to run
+pocketcleaner like this:
+
+```
+docker pull mrtazz/pocketcleaner
+docker run -i -e "POCKETCLEANER_CONSUMER_SECRET=your_secret" -e "POCKETCLEANER_ACCESS_TOKEN=your_token" --rm mrtazz/pocketcleaner
+```
+
 ## Configuration
 pocketcleaner reads the configuration file `$HOME/.pocketcleaner.ini` to get
 consumer key, access token, and the number of items to keep. The format looks
